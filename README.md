@@ -2,9 +2,11 @@ pre-requisite:
 
 Firefox browser
 
+
 installation:
 
 to use it, put this file in the chrome folder of your firefox profile. to find that location, in the address bar of firefox type in about:support and press enter. then find root directory of the profile in use and click open folder, the windows explorer location of the firefox profile opens. in that folder create a new folder named chrome if it doesn't exist already, then open it. if it does exist already just open it. paste this userChrome.css file into it. restart firefox and it will work. 
+
 
 what it does:
 
