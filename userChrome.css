@@ -1,0 +1,344 @@
+/* ============================================ */
+/* CUSTOM REWRITE of autohide_bookmarks_and_main_toolbars.css's reveal mechanism */
+/* Original source (for reference/license): */
+/* https://github.com/MrOtherGuy/firefox-csshacks/tree/master/chrome/autohide_bookmarks_and_main_toolbars.css */
+/* Made available under Mozilla Public License v. 2.0 */
+/*                                                */
+/* WHY THIS IS REWRITTEN: the original file uses a  */
+/* transform:rotateX() "flip" to visually reveal    */
+/* #nav-bar/#PersonalToolbar, layered on top of a   */
+/* permanently negative margin-bottom that keeps    */
+/* their reserved layout space at zero. Since       */
+/* transforms never affect layout, that meant the   */
+/* page could only ever be COVERED when revealed,   */
+/* never actually pushed down — the reserved space  */
+/* never changed. This rewrite replaces that with   */
+/* real visibility+height toggling (the same        */
+/* technique autohide_tabstoolbar_v2.css already    */
+/* uses successfully for tabs), so revealing the    */
+/* bar genuinely pushes the page down using real,    */
+/* automatically-computed height — no animation,    */
+/* since duration is 0ms throughout this setup, so  */
+/* there's no need to preserve the flip animation.  */
+/* ============================================ */
+
+#navigator-toolbox{
+  --uc-bm-padding: 4px; /* Vertical padding for bookmarks, still used by multi-row_bookmarks.css */
+  --uc-autohide-toolbar-delay: 2000ms; /* close delay: 2 seconds */
+  overflow: visible !important; /* FIX: #navigator-toolbox is a native Firefox
+    "chrome-block" container that clips its own children by default. Setting
+    overflow:visible on #nav-bar/#PersonalToolbar alone can't escape a parent
+    that's still clipping from the outside — this is what was cutting off
+    the bookmarks bar's extra rows during hover, not the scrollbar. */
+}
+:root[uidensity="touch"] #navigator-toolbox{ --uc-bm-padding: 6px }
+
+#navigator-toolbox,
+#sidebar-box,
+#sidebar-main,
+#sidebar-splitter,
+#tabbrowser-tabbox{
+  z-index: auto !important;
+}
+
+.tabbrowser-tab[selected]{ z-index: 3 !important; }
+
+#navigator-toolbox > div{ display: contents }
+:where(#navigator-toolbox > #TabsToolbar,#navigator-toolbox > #toolbar-menubar,#tab-notification-deck,.global-notificationbox,#notifications-toolbar){
+  order: -1;
+}
+
+@media -moz-pref("browser.fullscreen.autohide"){
+  :root[sizemode="fullscreen"] #navigator-toolbox[style*="margin-top"]{
+    margin-top: calc(1px - var(--tab-min-height) - 2 * var(--tab-margin-block,var(--tab-block-margin,0px))) !important;
+  }
+}
+
+/* Default hidden state: real zero-height, not just visually hidden.
+   Uses max-height instead of height:auto — height:auto cannot be smoothly
+   delayed/transitioned by Firefox (auto isn't an interpolable value), which
+   caused the close-delay to be skipped entirely. max-height between two
+   fixed numbers (0 and a generous cap below) transitions/delays correctly,
+   while still letting the box size to its real natural content height as
+   long as that content stays under the cap. */
+#nav-bar,
+#PersonalToolbar{
+  background-color: var(--toolbar-bgcolor, var(--lwt-accent-color, #1c1b22)) !important;
+  background-image: none !important;
+  overflow: hidden !important;
+  max-height: 0 !important;
+  min-height: 0 !important;
+  visibility: hidden !important;
+  transition: visibility 0ms linear var(--uc-autohide-toolbar-delay),
+              max-height 0ms linear var(--uc-autohide-toolbar-delay) !important;
+}
+
+/* Reveal triggers: hovering the toolbox, focusing anything inside it
+   (e.g. the urlbar), or a menu panel being open. max-height jumps to a
+   generous cap (600px — comfortably above nav-bar + 4 rows of bookmarks),
+   which pushes #browser down by the box's real content height, not the
+   cap itself, as long as real content stays under 600px. */
+#navigator-toolbox:hover #nav-bar,
+#navigator-toolbox:focus-within #nav-bar,
+#navigator-toolbox:has([breakout-extend]) #nav-bar,
+#mainPopupSet:has(> [panelopen]:not(#ask-chat-shortcuts,#selection-shortcut-action-panel,#chat-shortcuts-options-panel,#tab-preview-panel)) ~ #navigator-toolbox #nav-bar,
+:root[window-modal-open] #nav-bar,
+#nav-bar[customizing]{
+  max-height: 600px !important;
+  min-height: var(--urlbar-height, 32px) !important;
+  visibility: visible !important;
+  overflow: visible !important;
+  transition-delay: 0s !important;
+}
+
+#navigator-toolbox:hover #PersonalToolbar,
+#navigator-toolbox:focus-within #PersonalToolbar,
+#mainPopupSet:has(> [panelopen]:not(#ask-chat-shortcuts,#selection-shortcut-action-panel,#chat-shortcuts-options-panel,#tab-preview-panel)) ~ #navigator-toolbox #PersonalToolbar,
+:root[window-modal-open] #PersonalToolbar,
+#PersonalToolbar[customizing]{
+  max-height: 600px !important;
+  visibility: visible !important;
+  overflow: visible !important;
+  transition-delay: 0s !important;
+}
+
+/* Defensive reset: make sure no intermediate wrapper inside the bookmarks
+   bar caps its own height/overflow independently and clips the multi-row
+   content before it reaches #PersonalToolbar's own box. */
+#navigator-toolbox:hover #PersonalToolbar #PlacesToolbar,
+#navigator-toolbox:focus-within #PersonalToolbar #PlacesToolbar,
+#navigator-toolbox:hover #PersonalToolbar #PlacesToolbar > hbox,
+#navigator-toolbox:focus-within #PersonalToolbar #PlacesToolbar > hbox{
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+/* Preserve Firefox's own explicit "collapse bookmarks bar" state (set via
+   right-click > Bookmarks Toolbar > Never Show) and fullscreen collapse —
+   these should stay fully hidden regardless of hover. */
+:root[sizemode="fullscreen"] #PersonalToolbar,
+#PersonalToolbar:is([collapsed=""],[collapsed="true"]){
+  max-height: 0 !important;
+  visibility: hidden !important;
+}
+
+/* FIX: multi-row_bookmarks.css (File 3, further below) sets a plain
+   #PersonalToolbar{ max-height:none !important; } rule. That has the SAME
+   specificity as our own hidden-state rule above, and since File 3 comes
+   later in the file, it was winning the tie — meaning #PersonalToolbar's
+   max-height was never actually being capped at all, which is why it
+   stayed open indefinitely instead of collapsing after the delay. This
+   rule uses two chained ID selectors to reliably out-specificity File 3's
+   single-ID rule regardless of file order. */
+#navigator-toolbox #PersonalToolbar{
+  max-height: 0 !important;
+}
+#navigator-toolbox:hover #PersonalToolbar,
+#navigator-toolbox:focus-within #PersonalToolbar,
+#mainPopupSet:has(> [panelopen]:not(#ask-chat-shortcuts,#selection-shortcut-action-panel,#chat-shortcuts-options-panel,#tab-preview-panel)) ~ #navigator-toolbox #PersonalToolbar,
+:root[window-modal-open] #navigator-toolbox #PersonalToolbar,
+#navigator-toolbox #PersonalToolbar[customizing]{
+  max-height: 600px !important;
+}
+
+/* NOTE: #navigator-toolbox's margin-bottom during hover is fixed further
+   below, after File 2, where the actual conflicting rule lives. See the
+   FIX comment near the "Custom patch" section for the full explanation. */
+#PersonalToolbar:is([collapsed=""],[collapsed="true"]) #PlacesToolbarItems > *,
+:root[sizemode="fullscreen"] #PersonalToolbar #PlacesToolbarItems > *{
+  visibility: hidden !important;
+}
+
+#PlacesToolbarItems > .bookmark-item,
+#OtherBookmarks,
+#PersonalToolbar > #import-button{
+  padding-block: var(--uc-bm-padding) !important;
+}
+
+/* ============================================ */
+/* File 2: autohide_tabstoolbar_v2.css (UNCHANGED) */
+/* Source: https://github.com/MrOtherGuy/firefox-csshacks/tree/master/chrome/autohide_tabstoolbar_v2.css */
+/* Made available under Mozilla Public License v. 2.0 */
+/* Requires Firefox 133 */
+/* ============================================ */
+
+:root{
+  --uc-tabs-hide-animation-duration: 48ms;
+  --uc-tabs-hide-animation-delay: 200ms;
+}
+
+@media -moz-pref("sidebar.verticalTabs"){
+  #sidebar-container,
+  #sidebar-main{
+    overflow: visible !important;
+    max-width: var(--tab-collapsed-width) !important;
+    z-index: var(--browser-area-z-index-sidebar-expand-on-hover,var(--browser-area-z-index-toolbox-while-animating));
+    transition: z-index 0s linear var(--uc-tabs-hide-duration);
+    background: inherit;
+  }
+  sidebar-main{
+    --tab-pinned-horizontal-count: 5;
+    --uc-sidebar-tabs-width: calc(var(--tab-pinned-horizontal-count) * var(--tab-pinned-min-width-expanded) + 2 * var(--tab-pinned-container-margin-inline-expanded) + 1px);
+    background-color: var(--toolbox-background-color,var(--toolbox-bgcolor));
+    overflow: hidden;
+    min-width: var(--tab-collapsed-width);
+    transition: min-width var(--uc-tabs-hide-animation-duration) ease-out var(--uc-tabs-hide-animation-delay);
+    border-inline: 0.01px solid var(--chrome-content-separator-color);
+    border-inline-width: 0 0.01px;
+    &:is([sidebar-positionend],[positionend]){
+      transition-property: min-width, transform;
+      border-inline-width: 0.01px 0;
+    }
+  }
+  div.wrapper{
+    min-width: var(--uc-sidebar-tabs-width,initial);
+  }
+  :where(#navigator-toolbox[movingtab] + #browser > #sidebar-main) > sidebar-main[expanded],
+  sidebar-main[expanded]:hover{
+    min-width: calc(var(--tab-pinned-horizontal-count) * var(--tab-pinned-min-width-expanded) + 2 * var(--tab-pinned-container-margin-inline-expanded) + 1px);
+    transition-delay: 0ms !important;
+    &:is([sidebar-positionend],[positionend]){
+      transform: translateX(calc(var(--tab-collapsed-width) - 100%));
+    }
+  }
+  #sidebar-wrapper{
+    background: inherit;
+  }
+}
+@media not -moz-pref("sidebar.verticalTabs"){
+  :root:not([customizing],[chromehidden~="menubar"]) #navigator-toolbox:has(> :is(#toolbar-menubar,#TabsToolbar):hover),
+  :root:not([customizing],[chromehidden~="menubar"]) #TabsToolbar{
+    margin-bottom: calc(0px - 2 * var(--tab-margin-block,var(--tab-block-margin,0px)) - var(--tab-min-height));
+  }
+  #toolbar-menubar:is([autohide=""],[autohide="true"]) + #TabsToolbar:not(:hover){
+    -moz-window-dragging: no-drag !important;
+  }
+  #toolbar-menubar:is([autohide=""],[autohide="true"]) + #TabsToolbar:not(:hover,[customizing])::before{
+    content: "";
+    display: flex;
+    position: absolute;
+    height: 6px;
+    width: 100vw;
+    visibility: visible;
+  }
+  #navigator-toolbox{
+    transition: margin-bottom var(--uc-tabs-hide-animation-duration) ease-out var(--uc-tabs-hide-animation-delay) !important;
+    --browser-area-z-index-toolbox: 3;
+  }
+  #nav-bar{
+    height: calc(2 * var(--tab-margin-block,var(--tab-block-margin,0px)) + var(--tab-min-height));
+  }
+  #TabsToolbar:not([customizing]){
+    visibility: hidden;
+    position: relative;
+    z-index: 1;
+    transition: visibility 0ms linear var(--uc-tabs-hide-animation-delay),
+                margin-bottom var(--uc-tabs-hide-animation-duration) ease-out var(--uc-tabs-hide-animation-delay) !important;
+  }
+  #mainPopupSet:has( > #tab-group-editor > [panelopen], > #tabgroup-preview-panel[panelopen]) ~ #navigator-toolbox,
+  #navigator-toolbox:has(> :is(#toolbar-menubar,#TabsToolbar):hover),
+  #navigator-toolbox[movingtab]{
+    transition-delay: 0s !important;
+    margin-bottom: calc(0px - 2 * var(--tab-margin-block,var(--tab-block-margin,0px)) - var(--tab-min-height));
+    > #TabsToolbar{
+      visibility: visible;
+      margin-bottom: 0px;
+      transition-delay: 0ms, 0ms !important;
+    }
+  }
+  @media -moz-pref("userchrome.autohidetabs.show-while-inactive.enabled"){
+    #navigator-toolbox:-moz-window-inactive{
+      margin-bottom: calc(0px - 2 * var(--tab-margin-block,var(--tab-block-margin,0px)) - var(--tab-min-height));
+      > #TabsToolbar{
+        visibility: visible;
+        margin-bottom: 0px;
+      }
+    }
+  }
+  #tabbrowser-tabs:not([secondarytext-unsupported]) .tab-label-container{
+    max-height: var(--tab-min-height);
+  }
+  .tab-label{ line-height: 20px !important; }
+  :root[uidensity="compact"] .tab-label{ line-height: 18px !important; }
+}
+
+/* ============================================ */
+/* Custom patch: sync timing (instant snap, 2s   */
+/* close delay) for tabs, and add an             */
+/* always-present trigger strip so tabs can be   */
+/* revealed even without the classic menu bar    */
+/* being present.                                 */
+/* ============================================ */
+
+:root {
+  --uc-tabs-hide-animation-duration: 0ms;
+  --uc-tabs-hide-animation-delay: 2000ms;
+}
+
+#navigator-toolbox::before {
+  content: "" !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 12px !important;
+  z-index: 10001 !important;
+  pointer-events: auto !important;
+  background: transparent !important;
+}
+
+/* FIX: this rule originally set margin-bottom to -tabHeight during hover
+   (a leftover from the old overlay-only design, where only #TabsToolbar's
+   own margin needed to reset — #navigator-toolbox's outer margin was meant
+   to stay negative). Under our push-down rewrite, this was overriding our
+   nav-bar/bookmarks reveal logic and pulling #browser up to cover the
+   bottom ~44px of the now-taller toolbox. Changed to 0 so the whole
+   toolbox's real height is honored during reveal. */
+#navigator-toolbox:hover,
+#navigator-toolbox:focus-within {
+  transition-delay: 0s !important;
+  margin-bottom: 0px !important;
+}
+#navigator-toolbox:hover > #TabsToolbar {
+  visibility: visible !important;
+  margin-bottom: 0px !important;
+  transition-delay: 0ms, 0ms !important;
+}
+
+/* ============================================ */
+/* File 3: multi-row_bookmarks.css (UNCHANGED)   */
+/* Source: https://github.com/MrOtherGuy/firefox-csshacks/tree/master/chrome/multi-row_bookmarks.css */
+/* Made available under Mozilla Public License v. 2.0 */
+/* ============================================ */
+
+#PersonalToolbar{
+  --multirow-bmb-n-rows: 4;
+  --multirow-bmb-row-margin: 2px;
+  max-height: none !important;
+}
+:root[BookmarksToolbarOverlapsBrowser] :where(#PersonalToolbar){
+  height: unset !important;
+}
+
+#PlacesToolbar > hbox:not(#PlacesToolbarDropIndicatorHolder){ 
+  display: block;
+  width: 100vw;
+}
+
+#PlacesToolbarItems{
+  display: flex;
+  flex-wrap: wrap;
+  max-height: calc(var(--multirow-bmb-n-rows) * (4px + 1em + (2 * (var(--multirow-bmb-row-margin) + var(--uc-bm-padding,var(--bookmark-block-padding)))))) !important;
+  overflow-y:auto;
+  scrollbar-color: var(--lwt-accent-color,var(--toolbox-background-color,var(--toolbox-bgcolor))) var(--toolbar-background-color,var(--toolbar-bgcolor));
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+#PlacesChevron{ display: none }
+
+#PlacesToolbarItems > .bookmark-item{
+  margin: var(--multirow-bmb-row-margin) 0 !important;
+  border-inline: 2px solid transparent;
+  visibility: visible !important;
+}
