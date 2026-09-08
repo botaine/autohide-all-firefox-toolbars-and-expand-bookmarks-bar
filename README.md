@@ -8,7 +8,7 @@ optional recommended setup:
 after installing the file and opening firefox, right click in your tab bar, go to bookmarks toolbar, then click "always show". your bookmarks bar will be shown now.
 
 what it does:
-after install, your tab bar, address bar and bookmarks bar of firefox will hide automatically when you move the mouse away from the toolbar area after a 2 second delay. they will all reappear when you move the mouse back to the top of the firefox window. the bookmarks bar will also show a maximum of 4 lines at a time so it is more useable. scroll up and down if you reach 5 lines of bookmarks. everything works the same maximized and when in a smaller window.
+after install, your tab bar, address bar and bookmarks bar of firefox will hide automatically when you move the mouse away from the toolbar area after a 2 second delay. they will all reappear when you move the mouse back to the top of the firefox window. the bookmarks bar will also show a maximum of 4 rows at a time so it is more useable. scroll up and down if you reach 5 rows of bookmarks. everything works the same maximized and when in a smaller window.
 
 Fun fact:
-I don't know how to code! I got the Claude AI to make it!
+I don't know how to code! I got the Anthropic Claude AI to make it!
