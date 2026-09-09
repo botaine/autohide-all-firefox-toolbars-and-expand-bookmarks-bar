@@ -1,5 +1,5 @@
 /* ================================================================
-   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION (v7)
+   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION (v8)
    ================================================================
    Tabs, the address/search bar, and the bookmarks bar all hide
    together and reveal on hover near the top of the window, on
@@ -34,7 +34,7 @@
 #navigator-toolbox {
   /* Shared timing/spacing variables used throughout this file */
   --uc-bm-padding: 4px;
-  --uc-autohide-toolbar-delay: 0350ms;
+  --uc-autohide-toolbar-delay: 350ms;
 
   position: fixed !important;
   top: 0 !important;
@@ -124,7 +124,13 @@
                              tab is being dragged FROM another window
      [movingtab]          - set natively by Firefox when a tab is
                              being dragged WITHIN this window
-     #mainPopupSet:has(...) - a menu panel is open
+     #mainPopupSet:has(...) - a menu panel is open, OR the mouse is
+                             hovering a right-click context menu
+                             (detected via :hover directly, since
+                             Firefox's context menus don't reflect
+                             their open/closed state as any markup
+                             attribute — a hidden menu can never be
+                             hovered, so this works regardless)
      [window-modal-open]  - a modal dialog is open
      [customizing]        - toolbar customize mode is active
    ---------------------------------------------------------------- */
@@ -153,6 +159,7 @@
 #mainPopupSet:has(
   > [panelopen]:not(#ask-chat-shortcuts, #selection-shortcut-action-panel, #chat-shortcuts-options-panel, #tab-preview-panel)
 ) ~ #navigator-toolbox #TabsToolbar,
+#mainPopupSet:has(menupopup:hover) ~ #navigator-toolbox #TabsToolbar,
 :root[window-modal-open] #TabsToolbar,
 #TabsToolbar[customizing] {
   max-height: 600px !important;
@@ -170,6 +177,7 @@
 #mainPopupSet:has(
   > [panelopen]:not(#ask-chat-shortcuts, #selection-shortcut-action-panel, #chat-shortcuts-options-panel, #tab-preview-panel)
 ) ~ #navigator-toolbox #nav-bar,
+#mainPopupSet:has(menupopup:hover) ~ #navigator-toolbox #nav-bar,
 :root[window-modal-open] #nav-bar,
 #nav-bar[customizing] {
   max-height: 600px !important;
@@ -196,6 +204,7 @@
 #mainPopupSet:has(
   > [panelopen]:not(#ask-chat-shortcuts, #selection-shortcut-action-panel, #chat-shortcuts-options-panel, #tab-preview-panel)
 ) ~ #navigator-toolbox #PersonalToolbar:not([collapsed]),
+#mainPopupSet:has(menupopup:hover) ~ #navigator-toolbox #PersonalToolbar:not([collapsed]),
 :root[window-modal-open] #navigator-toolbox #PersonalToolbar:not([collapsed]),
 #navigator-toolbox #PersonalToolbar[customizing] {
   max-height: 600px !important;
