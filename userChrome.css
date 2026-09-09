@@ -34,7 +34,7 @@
 #navigator-toolbox {
   /* Shared timing/spacing variables used throughout this file */
   --uc-bm-padding: 4px;
-  --uc-autohide-toolbar-delay: 2000ms;
+  --uc-autohide-toolbar-delay: 0350ms;
 
   position: fixed !important;
   top: 0 !important;
