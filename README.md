@@ -1,5 +1,5 @@
 what it does:
-after install, your tab bar, address bar and bookmarks bar of firefox will hide automatically when you move the mouse away from the toolbar area after a 2 second delay. they will all reappear when you move the mouse back to the top of the firefox window. the bookmarks bar will also show a maximum of 4 rows at a time so it is more useable. scroll up and down if you reach 5 rows of bookmarks. everything works the same maximized and when in a smaller window. this works somewhat as a replacement for fullscreen mode. you don't have to click fullscreen anymore to hide the toolbars.
+after install, your tab bar, address bar and bookmarks bar of firefox will hide automatically when you move the mouse away from the toolbar area after a 350 millisecond delay. they will all reappear when you move the mouse back to the top of the firefox window. the bookmarks bar will also show a maximum of 4 rows at a time so it is more useable. scroll up and down if you reach 5 rows of bookmarks. everything works the same maximized and when in a smaller window. this works somewhat as a replacement for fullscreen mode. you don't have to click fullscreen anymore to hide the toolbars.
 
 pre-requisite:
 Firefox browser installed in Windows 11
