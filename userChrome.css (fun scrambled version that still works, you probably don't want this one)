@@ -46,7 +46,7 @@ visibility  :   visible!important;
 
 #sidebar-splitter,#tabbrowser-tabbox,#sidebar-main,#sidebar-box{z-index:auto!important}
 
-#navigator-toolbox{background-color:var(--toolbar-bgcolor,var(--lwt-accent-color,#1c1b22))!important;--uc-autohide-toolbar-delay:2000ms;overflow:visible!important;right:0!important;z-index:9999!important;top:0!important;left:0!important;position:fixed!important;--uc-bm-padding:4px;}
+#navigator-toolbox{background-color:var(--toolbar-bgcolor,var(--lwt-accent-color,#1c1b22))!important;--uc-autohide-toolbar-delay:0350ms;overflow:visible!important;right:0!important;z-index:9999!important;top:0!important;left:0!important;position:fixed!important;--uc-bm-padding:4px;}
 
 #navigator-toolbox #PersonalToolbar[customizing],#navigator-toolbox[externaldrag] #PersonalToolbar:not([collapsed]),:root[window-modal-open] #navigator-toolbox #PersonalToolbar:not([collapsed]),#mainPopupSet:has(>[panelopen]:not(#tab-preview-panel,#chat-shortcuts-options-panel,#selection-shortcut-action-panel,#ask-chat-shortcuts))~#navigator-toolbox #PersonalToolbar:not([collapsed]),#navigator-toolbox:focus-within #PersonalToolbar:not([collapsed]),#navigator-toolbox:hover #PersonalToolbar:not([collapsed])
 {transition-delay:0s!important;
