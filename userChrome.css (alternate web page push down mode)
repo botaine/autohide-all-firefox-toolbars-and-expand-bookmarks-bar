@@ -17,7 +17,7 @@
 
 #navigator-toolbox{
   --uc-bm-padding: 4px;
-  --uc-autohide-toolbar-delay: 2000ms;
+  --uc-autohide-toolbar-delay: 0350ms;
   position: fixed !important;
   top: 0 !important;
   left: 0 !important;
