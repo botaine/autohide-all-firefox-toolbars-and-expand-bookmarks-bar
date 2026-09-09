@@ -4,9 +4,8 @@ Firefox browser installed in Windows 11
 installation:
 download the userChrome.css file then put it in the chrome folder of your firefox profile. to find that location, in the address bar of firefox type in about:support and press enter. then find root directory of the profile in use and click open folder there. the windows explorer location of the firefox profile opens. in that folder create a new folder named chrome if it doesn't exist already, then open it. if it does exist already just open it. put the downloaded userChrome.css file into that chrome folder. if you already have something in an existing userChrome.css file there, you may not want to overwrite it. instead you should be able to copy and paste what is in my userChrome.css file to the bottom of your file, then save it. restart firefox if opened already, or open it if it was closed. right click in your tab bar, go to bookmarks toolbar, then click "always show". your bookmarks bar will be shown now on multiple rows. you can change this setting back to "never show" to hide the bookmarks if you prefer. 
 
-optional install to get cross window tab dragging working:
-install fx-autoconfig from here so that firefox can use javascripts https://github.com/MrOtherGuy/fx-autoconfig 
-then download the cross-window-drag.uc.js file and put it in the <profile>/chrome/JS folder.
+optional install to get cross window tab dragging working better:
+install fx-autoconfig from here so that firefox can use javascripts https://github.com/MrOtherGuy/fx-autoconfig then download the cross-window-drag.uc.js file and put it in the <profile>/chrome/JS folder. this optional install will make every firefox toolbar in all windows go into the unhidden state while you are moving a firefox tab. the Claude AI can help with install difficulty.  
 
 
 what it does:
