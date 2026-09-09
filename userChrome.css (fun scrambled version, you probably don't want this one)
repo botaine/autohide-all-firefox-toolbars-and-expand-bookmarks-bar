@@ -1,0 +1,66 @@
+.tab-label{line-height:  20px!important
+   ;}
+#PlacesToolbarItems > .bookmark-item ,#OtherBookmarks   ,#PersonalToolbar > #import-button {
+padding-block:var(--uc-bm-padding)   !important;}
+      #PlacesChevron{display :none;}
+.urlbar-container{--urlbar-container-height:40px !important}
+:root[uidensity="compact"] .tab-label {   line-height:18px!important;
+}
+#navigator-toolbox #PersonalToolbar   {   max-height   :0!important   ;
+}
+#tabbrowser-tabs:not([secondarytext-unsupported])   .tab-label-container{
+   max-height:var(--tab-min-height)   ;}
+        #PersonalToolbar:is([collapsed])   #PlacesToolbarItems  >   *  ,
+:root[sizemode="fullscreen"]     #PersonalToolbar #PlacesToolbarItems > *
+{visibility:hidden!important;}
+
+
+#PersonalToolbar{max-height:none!important;--multirow-bmb-row-margin:2px;--multirow-bmb-n-rows:4;}
+
+
+  #navigator-toolbox:hover #nav-bar,#navigator-toolbox[externaldrag] #nav-bar,#navigator-toolbox:has([breakout-extend]) #nav-bar,:root[window-modal-open] #nav-bar,#mainPopupSet:has(>[panelopen]:not(#chat-shortcuts-options-panel,#ask-chat-shortcuts,#tab-preview-panel,#selection-shortcut-action-panel))~#navigator-toolbox #nav-bar,#navigator-toolbox:focus-within #nav-bar,#nav-bar[customizing]
+{
+overflow:visible!important;
+visibility  :   visible!important;
+      transition-delay:0s!important;min-height:40px!important;max-height  :  600px !important;
+}
+
+#PlacesToolbar>hbox:not(#PlacesToolbarDropIndicatorHolder){width:100vw;display:block}
+
+:root[sizemode="fullscreen"] #PersonalToolbar,#PersonalToolbar:is([collapsed]){visibility:hidden!important;max-height:0!important;}
+
+#navigator-toolbox::before{-moz-window-dragging:drag!important;background:transparent!important;pointer-events:auto!important;z-index:10001!important;right:0!important;left:0!important;top:0!important;position:fixed!important;height:12px!important;content:""!important;}
+
+:root[BookmarksToolbarOverlapsBrowser] :where(#PersonalToolbar) { height: unset!important; }
+
+  #navigator-toolbox[movingtab] #TabsToolbar,#navigator-toolbox:focus-within #TabsToolbar,:root[window-modal-open] #TabsToolbar,#mainPopupSet:has(>[panelopen]:not(#tab-preview-panel,#ask-chat-shortcuts,#chat-shortcuts-options-panel,#selection-shortcut-action-panel))~#navigator-toolbox #TabsToolbar,#TabsToolbar[customizing],#navigator-toolbox:hover #TabsToolbar,#navigator-toolbox[externaldrag] #TabsToolbar
+      {min-height:var(--tab-min-height,36px)!important;transition-delay:0s!important;overflow:visible!important;visibility:visible!important;max-height:600px!important;}
+
+.tabbrowser-tab[selected]   {z-index:3!important}
+
+@media -moz-pref("browser.fullscreen.autohide"){:root[sizemode="fullscreen"] #navigator-toolbox[style*="margin-top"]{margin-top:calc(1px - var(--tab-min-height) - 2*var(--tab-margin-block,var(--tab-block-margin,0px)))!important}}
+
+#navigator-toolbox[externaldrag]::before,#navigator-toolbox:focus-within::before,#navigator-toolbox:hover::before{pointer-events:none!important}
+
+    #PlacesToolbarItems{scrollbar-width:thin;overflow-y:auto;display:flex;scrollbar-gutter:stable;flex-wrap:wrap;scrollbar-color:var(--lwt-accent-color,var(--toolbox-background-color,var(--toolbox-bgcolor))) var(--toolbar-background-color,var(--toolbar-bgcolor));max-height:calc(var(--multirow-bmb-n-rows) * (4px + 1em + (2 * (var(--multirow-bmb-row-margin) + var(--uc-bm-padding,var(--bookmark-block-padding))))))!important;}
+
+#sidebar-splitter,#tabbrowser-tabbox,#sidebar-main,#sidebar-box{z-index:auto!important}
+
+#navigator-toolbox{background-color:var(--toolbar-bgcolor,var(--lwt-accent-color,#1c1b22))!important;--uc-autohide-toolbar-delay:2000ms;overflow:visible!important;right:0!important;z-index:9999!important;top:0!important;left:0!important;position:fixed!important;--uc-bm-padding:4px;}
+
+#navigator-toolbox #PersonalToolbar[customizing],#navigator-toolbox[externaldrag] #PersonalToolbar:not([collapsed]),:root[window-modal-open] #navigator-toolbox #PersonalToolbar:not([collapsed]),#mainPopupSet:has(>[panelopen]:not(#tab-preview-panel,#chat-shortcuts-options-panel,#selection-shortcut-action-panel,#ask-chat-shortcuts))~#navigator-toolbox #PersonalToolbar:not([collapsed]),#navigator-toolbox:focus-within #PersonalToolbar:not([collapsed]),#navigator-toolbox:hover #PersonalToolbar:not([collapsed])
+{transition-delay:0s!important;
+overflow  :visible!important;visibility:visible!important;max-height:600px!important}
+
+#PlacesToolbarItems>.bookmark-item{visibility:visible!important;border-inline:2px solid transparent;margin:var(--multirow-bmb-row-margin) 0!important;}
+
+:root[uidensity="touch"] #navigator-toolbox{--uc-bm-padding:6px;}
+
+#navigator-toolbox > div{display:contents;}
+
+#navigator-toolbox[externaldrag] #PersonalToolbar:not([collapsed]) #PlacesToolbar>hbox,#navigator-toolbox[externaldrag] #PersonalToolbar:not([collapsed]) #PlacesToolbar,#navigator-toolbox:focus-within #PersonalToolbar:not([collapsed]) #PlacesToolbar,#navigator-toolbox:hover #PersonalToolbar:not([collapsed]) #PlacesToolbar,#navigator-toolbox:focus-within #PersonalToolbar:not([collapsed]) #PlacesToolbar>hbox,#navigator-toolbox:hover #PersonalToolbar:not([collapsed]) #PlacesToolbar>hbox
+      { overflow: visible !important;max-height:none!important; }
+
+:where(.global-notificationbox,#navigator-toolbox>#toolbar-menubar,#navigator-toolbox>#TabsToolbar,#notifications-toolbar,#tab-notification-deck){order:-1;}
+
+#PersonalToolbar,#nav-bar,#TabsToolbar{visibility:hidden!important;background-image:none!important;transition:min-height 0ms linear var(--uc-autohide-toolbar-delay),max-height 0ms linear var(--uc-autohide-toolbar-delay),visibility 0ms linear var(--uc-autohide-toolbar-delay) !important;overflow:hidden!important;background-color:var(--toolbar-bgcolor,var(--lwt-accent-color,#1c1b22))!important;min-height:0!important;max-height:0!important;}
