@@ -10,7 +10,8 @@ put userChrome.css in the chrome folder of your firefox profile. to find that lo
 optional install to get cross window tab dragging working better:
 if not installed already, install fx-autoconfig from here so that firefox can use javascripts https://github.com/MrOtherGuy/fx-autoconfig then download the cross-window-drag.uc.js file and put it in the <firefox-profile>/chrome/JS folder. this optional install will make every firefox toolbar in all windows go into the unhidden state while you are moving a firefox tab. if you don't want to do this part but still want to move tabs around easier you can do a workaround of changing the hide delay in userChrome.css to something like 3000ms. look for this to change near the top of the file --uc-autohide-toolbar-delay: 0400ms;
 
-optional install to make folders on the bookmarks bar open inline with other bookmarks on the bookmarks bar: if not installed already, install fx-autoconfig from here so that firefox can use javascripts https://github.com/MrOtherGuy/fx-autoconfig then download the inline-bookmark-folders.uc.js file and put it in the <firefox-profile>/chrome/JS folder. if you don't use folders on the bookmarks bar or you just prefer the original look, then this file isn't necessary.
+optional install to make folders on the bookmarks bar open inline with other bookmarks on the bookmarks bar: 
+if not installed already, install fx-autoconfig from here so that firefox can use javascripts https://github.com/MrOtherGuy/fx-autoconfig then download the inline-bookmark-folders.uc.js file and put it in the <firefox-profile>/chrome/JS folder. if you don't use folders on the bookmarks bar or you just prefer the original look, then this file isn't necessary.
 
 Fun fact:
 I don't know how to code! I got the Anthropic Claude AI to make it!
