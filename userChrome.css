@@ -1,5 +1,5 @@
 /* ================================================================
-   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION (v11)
+   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION (v12)
    ================================================================
    Tabs, the address/search bar, and the bookmarks bar all hide
    together and reveal on hover near the top of the window, on
@@ -257,6 +257,20 @@
 #OtherBookmarks,
 #PersonalToolbar > #import-button {
   padding-block: var(--uc-bm-padding) !important;
+}
+
+/* Outline an expanded bookmarks-toolbar folder (or nested folder) using
+   currentColor, so the outline automatically matches the folder's own
+   label text color under any theme, without hardcoding a value. Uses
+   outline (not border) so it doesn't shift the button's own layout size,
+   and a negative outline-offset so it sits just inside the button's edge
+   rather than outside it. Reverts to normal automatically once
+   inline-bookmark-folders.uc.js removes the data-bmif-expanded attribute
+   on collapse. Applies to nested folders too, since they share the same
+   .bookmark-item class and attribute. */
+.bookmark-item[data-bmif-expanded="true"] {
+  outline: 1px solid currentColor !important;
+  outline-offset: -1px !important;
 }
 
 /* FIX: Firefox's toolbars treat empty/blank space as a window-drag handle
