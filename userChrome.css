@@ -1,0 +1,397 @@
+/* ================================================================
+   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION (v8)
+   ================================================================
+   Tabs, the address/search bar, and the bookmarks bar all hide
+   together and reveal on hover near the top of the window, on
+   focus (e.g. clicking the urlbar), or during a tab drag.
+
+   OVERLAY behavior: #navigator-toolbox is taken out of normal
+   document flow (position: fixed), so the webpage NEVER moves —
+   the toolbars float on top of it when revealed, instead of
+   pushing it down.
+
+   Sections in this file:
+     1. Toolbox setup & positioning
+     2. Hover trigger strip
+     3. Toolbar show/hide states (tabs, nav-bar, bookmarks)
+     4. Bookmarks toolbar specifics
+     5. Tab label sizing
+     6. Address/search bar dropdown fix
+     7. Multi-row bookmarks bar (third-party, unchanged)
+
+   Note: Firefox's vertical-tabs sidebar mode is not supported by
+   this file — ask if you need that added.
+   ================================================================ */
+
+
+/* ----------------------------------------------------------------
+   1. TOOLBOX SETUP & POSITIONING
+   Takes #navigator-toolbox out of document flow so it can overlay
+   the page without pushing it. Resets z-index on a few elements
+   that would otherwise fight with the toolbox's own stacking order.
+   ---------------------------------------------------------------- */
+
+#navigator-toolbox {
+  /* Shared timing/spacing variables used throughout this file */
+  --uc-bm-padding: 4px;
+  --uc-autohide-toolbar-delay: 350ms;
+
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  z-index: 9999 !important;
+  overflow: visible !important;
+  background-color: var(--toolbar-bgcolor, var(--lwt-accent-color, #1c1b22)) !important;
+}
+
+:root[uidensity="touch"] #navigator-toolbox {
+  --uc-bm-padding: 6px;
+}
+
+#sidebar-box,
+#sidebar-main,
+#sidebar-splitter,
+#tabbrowser-tabbox {
+  z-index: auto !important;
+}
+
+.tabbrowser-tab[selected] {
+  z-index: 3 !important;
+}
+
+#navigator-toolbox > div {
+  display: contents;
+}
+
+:where(
+  #navigator-toolbox > #TabsToolbar,
+  #navigator-toolbox > #toolbar-menubar,
+  #tab-notification-deck,
+  .global-notificationbox,
+  #notifications-toolbar
+) {
+  order: -1;
+}
+
+/* Compatibility with Firefox's own native fullscreen auto-hide */
+@media -moz-pref("browser.fullscreen.autohide") {
+  :root[sizemode="fullscreen"] #navigator-toolbox[style*="margin-top"] {
+    margin-top: calc(1px - var(--tab-min-height) - 2 * var(--tab-margin-block, var(--tab-block-margin, 0px))) !important;
+  }
+}
+
+
+/* ----------------------------------------------------------------
+   2. HOVER TRIGGER STRIP
+   An always-present 12px strip at the very top of the window that
+   catches the mouse even when every toolbar below it is fully
+   collapsed to zero height. Once a toolbar is actually revealed,
+   pointer-events are handed back to it so clicks/drags work
+   normally instead of being intercepted by this invisible strip.
+   ---------------------------------------------------------------- */
+
+#navigator-toolbox::before {
+  content: "" !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 12px !important;
+  z-index: 10001 !important;
+  pointer-events: auto !important;
+  background: transparent !important;
+  -moz-window-dragging: drag !important;
+}
+
+#navigator-toolbox:hover::before,
+#navigator-toolbox:focus-within::before,
+#navigator-toolbox[externaldrag]::before {
+  pointer-events: none !important;
+}
+
+
+/* ----------------------------------------------------------------
+   3. TOOLBAR SHOW/HIDE STATES
+   All three toolbars share one hidden state (real zero-height via
+   max-height, not height:auto — Firefox can't delay/transition
+   height:auto) and each has its own reveal rule below it.
+
+   Reveal triggers, shared across all three toolbars:
+     :hover               - mouse over the toolbox
+     :focus-within        - e.g. clicking into the urlbar
+     [externaldrag]       - set by cross-window-drag.uc.js when a
+                             tab is being dragged FROM another window
+     [movingtab]          - set natively by Firefox when a tab is
+                             being dragged WITHIN this window
+     #mainPopupSet:has(...) - a menu panel is open, OR the mouse is
+                             hovering a right-click context menu or the
+                             native download popup (both detected via
+                             :hover directly, since Firefox's context
+                             menus don't reflect open/closed state as
+                             any markup attribute — a hidden one can
+                             never be hovered, so this works
+                             regardless). #downloadsPanel is explicitly
+                             excluded from the general "any panel is
+                             open" trigger above (so it doesn't
+                             independently keep the toolbar open just
+                             by existing) but still keeps the toolbar
+                             open while the mouse is actually over it —
+                             download-forceopen.uc.js's own precise
+                             3-second timer governs everything else
+     [window-modal-open]  - a modal dialog is open
+     [customizing]        - toolbar customize mode is active
+     [forceopen]          - set for 3 seconds by download-forceopen.uc.js
+                             whenever a download starts or completes,
+                             regardless of mouse position. Repeated
+                             triggers within the window reset the 3s
+                             countdown rather than extending past it
+   ---------------------------------------------------------------- */
+
+/* --- 3a. Shared hidden state --- */
+#TabsToolbar,
+#nav-bar,
+#PersonalToolbar {
+  background-color: var(--toolbar-bgcolor, var(--lwt-accent-color, #1c1b22)) !important;
+  background-image: none !important;
+  overflow: hidden !important;
+  max-height: 0 !important;
+  min-height: 0 !important;
+  visibility: hidden !important;
+  transition:
+    visibility 0ms linear var(--uc-autohide-toolbar-delay),
+    max-height 0ms linear var(--uc-autohide-toolbar-delay),
+    min-height 0ms linear var(--uc-autohide-toolbar-delay) !important;
+}
+
+/* --- 3b. Tabs reveal --- */
+#navigator-toolbox:hover #TabsToolbar,
+#navigator-toolbox:focus-within #TabsToolbar,
+#navigator-toolbox[externaldrag] #TabsToolbar,
+#navigator-toolbox[forceopen] #TabsToolbar,
+#navigator-toolbox[movingtab] #TabsToolbar,
+#mainPopupSet:has(
+  > [panelopen]:not(#ask-chat-shortcuts, #selection-shortcut-action-panel, #chat-shortcuts-options-panel, #tab-preview-panel, #downloadsPanel)
+) ~ #navigator-toolbox #TabsToolbar,
+#mainPopupSet:has(menupopup:hover) ~ #navigator-toolbox #TabsToolbar,
+#mainPopupSet:has(#downloadsPanel:hover) ~ #navigator-toolbox #TabsToolbar,
+:root[window-modal-open] #TabsToolbar,
+#TabsToolbar[customizing] {
+  max-height: 600px !important;
+  min-height: var(--tab-min-height, 36px) !important;
+  visibility: visible !important;
+  overflow: visible !important;
+  transition-delay: 0s !important;
+}
+
+/* --- 3c. Nav-bar (address/search bar) reveal --- */
+#navigator-toolbox:hover #nav-bar,
+#navigator-toolbox:focus-within #nav-bar,
+#navigator-toolbox:has([breakout-extend]) #nav-bar,
+#navigator-toolbox[externaldrag] #nav-bar,
+#navigator-toolbox[forceopen] #nav-bar,
+#mainPopupSet:has(
+  > [panelopen]:not(#ask-chat-shortcuts, #selection-shortcut-action-panel, #chat-shortcuts-options-panel, #tab-preview-panel, #downloadsPanel)
+) ~ #navigator-toolbox #nav-bar,
+#mainPopupSet:has(menupopup:hover) ~ #navigator-toolbox #nav-bar,
+#mainPopupSet:has(#downloadsPanel:hover) ~ #navigator-toolbox #nav-bar,
+:root[window-modal-open] #nav-bar,
+#nav-bar[customizing] {
+  max-height: 600px !important;
+  /* --urlbar-height (32px) is only the address bar input's own
+     height, not the full toolbar's real height including padding
+     (measured at 40px with this CSS fully disabled) */
+  min-height: 40px !important;
+  visibility: visible !important;
+  overflow: visible !important;
+  transition-delay: 0s !important;
+}
+
+/* --- 3d. Bookmarks bar reveal ---
+   Explicitly excludes the collapsed state (:not([collapsed])) so
+   Firefox's own "Never Show" setting for the bookmarks toolbar
+   can't be overridden during hover — without this, hovering would
+   force an empty, background-colored bar open anyway. A plain
+   existence check ([collapsed]) is used rather than matching an
+   exact value, since Firefox's real attribute here doesn't match
+   [collapsed=""] or [collapsed="true"] directly. */
+#navigator-toolbox:hover #PersonalToolbar:not([collapsed]),
+#navigator-toolbox:focus-within #PersonalToolbar:not([collapsed]),
+#navigator-toolbox[externaldrag] #PersonalToolbar:not([collapsed]),
+#navigator-toolbox[forceopen] #PersonalToolbar:not([collapsed]),
+#mainPopupSet:has(
+  > [panelopen]:not(#ask-chat-shortcuts, #selection-shortcut-action-panel, #chat-shortcuts-options-panel, #tab-preview-panel, #downloadsPanel)
+) ~ #navigator-toolbox #PersonalToolbar:not([collapsed]),
+#mainPopupSet:has(menupopup:hover) ~ #navigator-toolbox #PersonalToolbar:not([collapsed]),
+#mainPopupSet:has(#downloadsPanel:hover) ~ #navigator-toolbox #PersonalToolbar:not([collapsed]),
+:root[window-modal-open] #navigator-toolbox #PersonalToolbar:not([collapsed]),
+#navigator-toolbox #PersonalToolbar[customizing] {
+  max-height: 600px !important;
+  visibility: visible !important;
+  overflow: visible !important;
+  transition-delay: 0s !important;
+}
+
+/* Defensive reset: stops any intermediate wrapper inside the
+   bookmarks bar from independently capping its own height/overflow
+   and clipping the multi-row content before it reaches
+   #PersonalToolbar's own box. */
+#navigator-toolbox:hover #PersonalToolbar:not([collapsed]) #PlacesToolbar,
+#navigator-toolbox:focus-within #PersonalToolbar:not([collapsed]) #PlacesToolbar,
+#navigator-toolbox[externaldrag] #PersonalToolbar:not([collapsed]) #PlacesToolbar,
+#navigator-toolbox[forceopen] #PersonalToolbar:not([collapsed]) #PlacesToolbar,
+#navigator-toolbox:hover #PersonalToolbar:not([collapsed]) #PlacesToolbar > hbox,
+#navigator-toolbox:focus-within #PersonalToolbar:not([collapsed]) #PlacesToolbar > hbox,
+#navigator-toolbox[externaldrag] #PersonalToolbar:not([collapsed]) #PlacesToolbar > hbox,
+#navigator-toolbox[forceopen] #PersonalToolbar:not([collapsed]) #PlacesToolbar > hbox {
+  max-height: none !important;
+  overflow: visible !important;
+}
+
+
+/* ----------------------------------------------------------------
+   4. BOOKMARKS TOOLBAR SPECIFICS
+   ---------------------------------------------------------------- */
+
+/* Preserve Firefox's own explicit "collapse bookmarks bar" state
+   (right-click > Bookmarks Toolbar > Never Show) and fullscreen
+   collapse — these stay fully hidden regardless of hover. */
+:root[sizemode="fullscreen"] #PersonalToolbar,
+#PersonalToolbar:is([collapsed]) {
+  max-height: 0 !important;
+  visibility: hidden !important;
+}
+
+/* Beats multi-row_bookmarks.css's own plain
+   #PersonalToolbar{max-height:none} rule (section 7 below), which
+   otherwise ties in specificity and wins by source order. */
+#navigator-toolbox #PersonalToolbar {
+  max-height: 0 !important;
+}
+
+#PersonalToolbar:is([collapsed]) #PlacesToolbarItems > *,
+:root[sizemode="fullscreen"] #PersonalToolbar #PlacesToolbarItems > * {
+  visibility: hidden !important;
+}
+
+#PlacesToolbarItems > .bookmark-item,
+#OtherBookmarks,
+#PersonalToolbar > #import-button {
+  padding-block: var(--uc-bm-padding) !important;
+}
+
+/* Outline an expanded bookmarks-toolbar folder (or nested folder) using
+   currentColor, so the outline automatically matches the folder's own
+   label text color under any theme, without hardcoding a value. Uses
+   outline (not border) so it doesn't shift the button's own layout size,
+   and a negative outline-offset so it sits just inside the button's edge
+   rather than outside it. Reverts to normal automatically once
+   inline-bookmark-folders.uc.js removes the data-bmif-expanded attribute
+   on collapse. Applies to nested folders too, since they share the same
+   .bookmark-item class and attribute. */
+.bookmark-item[data-bmif-expanded="true"] {
+  outline: 1px solid currentColor !important;
+  outline-offset: -1px !important;
+}
+
+/* FIX: Firefox's toolbars treat empty/blank space as a window-drag handle
+   by default (that's how you normally move the window by grabbing blank
+   toolbar area) — interactive elements like buttons are automatically
+   excluded from this, but the bookmarks bar's own scrollbar (a native
+   widget, not a normal button) apparently isn't recognized the same way,
+   so click-dragging it was moving the whole window instead of scrolling.
+   This explicitly excludes the entire bookmarks content area (including
+   its scrollbar) from window-dragging regardless of Firefox's own
+   default heuristics for that region. */
+#PlacesToolbarItems {
+  -moz-window-dragging: no-drag !important;
+}
+
+
+/* ----------------------------------------------------------------
+   5. TAB LABEL SIZING
+   Keeps tab row height consistent now that #TabsToolbar's own
+   height is controlled directly (section 3b) rather than via a
+   parent's margin.
+   ---------------------------------------------------------------- */
+
+#tabbrowser-tabs:not([secondarytext-unsupported]) .tab-label-container {
+  max-height: var(--tab-min-height);
+}
+
+.tab-label {
+  line-height: 20px !important;
+}
+
+:root[uidensity="compact"] .tab-label {
+  line-height: 18px !important;
+}
+
+
+/* ----------------------------------------------------------------
+   6. ADDRESS/SEARCH BAR DROPDOWN FIX
+   Firefox sets --urlbar-container-height directly on the container
+   element via inline style, and several of Firefox's own native
+   rules (min-height, the suggestions dropdown's padding, and its
+   vertical position) all calculate off this one variable. With a
+   custom toolbar height toggling like this file's, Firefox measures
+   it incorrectly (observed as low as 8px), corrupting every
+   downstream formula built on top of it. Overriding the variable
+   itself, at its source, lets every native formula that reads it
+   use the corrected value automatically.
+
+   Targets the shared .urlbar-container CLASS (matching Firefox's
+   own native rule) rather than a specific ID, since both the
+   address bar (#urlbar-container) and the search bar
+   (#search-container) carry this class and the same bug.
+   ---------------------------------------------------------------- */
+
+.urlbar-container {
+  --urlbar-container-height: 40px !important;
+}
+
+
+/* ================================================================
+   7. MULTI-ROW BOOKMARKS BAR (third-party, unchanged)
+   Source: https://github.com/MrOtherGuy/firefox-csshacks/tree/master/chrome/multi-row_bookmarks.css
+   Made available under Mozilla Public License v. 2.0
+   ================================================================ */
+
+#PersonalToolbar {
+  --multirow-bmb-n-rows: 10;
+  --multirow-bmb-row-margin: 2px;
+  max-height: none !important;
+}
+
+:root[BookmarksToolbarOverlapsBrowser] :where(#PersonalToolbar) {
+  height: unset !important;
+}
+
+#PlacesToolbar > hbox:not(#PlacesToolbarDropIndicatorHolder) {
+  display: block;
+  width: 100vw;
+}
+
+#PlacesToolbarItems {
+  display: flex;
+  flex-wrap: wrap;
+  max-height: calc(
+    var(--multirow-bmb-n-rows) *
+    (4px + 1em + (2 * (var(--multirow-bmb-row-margin) + var(--uc-bm-padding, var(--bookmark-block-padding)))))
+  ) !important;
+  overflow-y: auto;
+  scrollbar-color: var(--lwt-accent-color, var(--toolbox-background-color, var(--toolbox-bgcolor)))
+                   var(--toolbar-background-color, var(--toolbar-bgcolor));
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+}
+
+#PlacesChevron {
+  display: none;
+}
+
+#PlacesToolbarItems > .bookmark-item {
+  margin: var(--multirow-bmb-row-margin) 0 !important;
+  border-inline: 2px solid transparent;
+  visibility: visible !important;
+}
