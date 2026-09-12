@@ -42,7 +42,7 @@ if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltinRole]::Adm
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 Write-Step "Determining Install Location"
-$defaultLocation = Read-Host "  Is the main version of Firefox installed in the default location, downloaded from firefox.com (not the Microsoft Store), and you are using the installed, non-portable version? (Y/N)"
+$defaultLocation = Read-Host "  Is the main version of Firefox installed in the default location (C:\Program Files\Mozilla Firefox), downloaded `n from firefox.com (not the Microsoft Store), and you are using the installed, non-portable version? (Y/N) "
 
 if ($defaultLocation -match "^[Yy]") {
     $installDir = "$env:ProgramFiles\Mozilla Firefox"
