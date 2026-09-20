@@ -12,5 +12,14 @@ in firefox, open about:config by typing it into the address bar, then seach for 
 
 install fx-autoconfig from here so that firefox can use javascripts on the browser UI https://github.com/MrOtherGuy/fx-autoconfig . be sure to complete both the "Setting up config.js from program folder" and the "setting up profile" portion of the install. put all of the downloaded .js files of autohide-all-firefox-toolbars-and-expand-bookmarks-bar into the <firefox_profile>/chrome/JS folder. restart firefox if opened already, or open it if it was closed. right click in your tab bar, go to bookmarks toolbar, then click "always show". your bookmarks bar will be shown now on multiple rows. you can change this setting back to "never show" to hide the bookmarks if you prefer. the Claude AI can help with install difficulty at any stage. 
 
+configuration:
+After installation, here are some settings you might want to change by editing files in notepad. Copy the setting you want to change from below, then open the corresponding file in notepad, use ctrl+f to use the find function, then paste the setting below with ctrl+v to find where to make the change. Make your change, save the file and restart firefox to apply the change.
+
+In userChrome.css, you can change the number value of --uc-autohide-toolbar-delay 350ms; to any other number in milliseconds to change the toolbar hide delay. I found 350ms is the lowest I could go before the toolbar seems to flicker more than I would like.
+
+In userChrome.css you can change --multirow-bmb-n-rows: 10; to another number to decide how many rows of bookmarks will be shown without having to scroll up and down through them. I used 10 rows because I don't want to scroll often and opening folders on the bookmarks bar takes up more space. 
+
+In download-forceopen.uc.js you can change forceStayOpenFor(4000); to any other number in milliseconds to set how long the toolbars and download pop up will be shown after a download starts or finishes. I find this number lets me see it clearly and doesn't open and close too quickly for short downloads.
+
 Fun fact:
 I don't know how to code! I got the Anthropic Claude AI to make it!
