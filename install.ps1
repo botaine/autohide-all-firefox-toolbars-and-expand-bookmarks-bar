@@ -165,7 +165,7 @@ Write-Ok "Folders ready"
 
 Write-Step "Copying userChrome.css and .uc.js scripts"
 $cssSource = Join-Path $scriptDir "userChrome.css"
-$scriptFiles = @("cross-window-drag.uc.js", "inline-bookmark-folders.uc.js", "download-forceopen.uc.js", "fake-fullscreen.uc.js")
+$scriptFiles = @("cross-window-drag.uc.js", "inline-bookmark-folders.uc.js", "download-forceopen.uc.js", "fake-fullscreen.uc.js", "no-newtab-urlbar-focus.uc.js")
 if (-not (Test-Path $cssSource)) {
     Write-Err "userChrome.css not found next to this installer. Make sure you extracted the whole folder, not just this script."
     Clear-InputBuffer

@@ -159,7 +159,7 @@ if (Test-Path $cssPath) {
     Write-Warn "userChrome.css not found - already removed or never installed here"
 }
 
-foreach ($file in @("cross-window-drag.uc.js", "inline-bookmark-folders.uc.js", "download-forceopen.uc.js", "fake-fullscreen.uc.js")) {
+foreach ($file in @("cross-window-drag.uc.js", "inline-bookmark-folders.uc.js", "download-forceopen.uc.js", "fake-fullscreen.uc.js", "no-newtab-urlbar-focus.uc.js")) {
     $path = Join-Path $jsDir $file
     if (Test-Path $path) {
         Remove-Item $path -Force
