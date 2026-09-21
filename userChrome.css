@@ -1,5 +1,5 @@
 /* ================================================================
-   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION 23
+   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION 24
    ================================================================
    Tabs, the address/search bar, and the bookmarks bar all hide
    together and reveal on hover near the top of the window, on
@@ -36,6 +36,8 @@
    Sections in this file:
      1. Toolbox setup & positioning
      1b. Fullscreen push-down override
+     1c. Native content/video fullscreen override (fully hides the
+         toolbar over a fullscreened video, e.g. on YouTube)
      2. Hover trigger strip
      3. Toolbar show/hide states (tabs, nav-bar, bookmarks)
      4. Bookmarks toolbar specifics (folder expansion/drag styling,
@@ -150,6 +152,40 @@
   top: auto !important;
   left: auto !important;
   right: auto !important;
+}
+
+
+/* ----------------------------------------------------------------
+   1c. NATIVE CONTENT/VIDEO FULLSCREEN OVERRIDE
+   When a website puts itself into fullscreen through the standard
+   Fullscreen API - the fullscreen button on a YouTube/etc. video,
+   not this mod's own "fullscreen mode" toggle - Firefox sets
+   inDOMFullscreen="true" on :root and also takes the whole browser
+   window into real, OS-level fullscreen alongside it. That's
+   completely separate from fake-fullscreen.uc.js, which only ever
+   intercepts the F11/menu Full Screen command, never a website's
+   own fullscreen request. Because entering real content fullscreen
+   also sets sizemode="fullscreen" - the same attribute section 1b
+   and 3e's fullscreen safety-net selectors match on - this mod's
+   own hover-reveal and "always show in fullscreen" behavior would
+   otherwise kick in here too, drawing this mod's toolbar buttons on
+   top of the fullscreened video.
+
+   display:none on #navigator-toolbox itself removes it - and every
+   toolbar and the section 2 hover-trigger strip inside/generated
+   from it - from rendering entirely, with no exceptions: a
+   display:none ancestor overrides any descendant's own visibility,
+   max-height, or position:fixed, so this wins regardless of what
+   section 3e or the hover rules say, without needing to out-specify
+   each of them individually. Firefox removes inDOMFullscreen the
+   moment the video's fullscreen ends, so the toolbar comes right
+   back on its own, with no extra script or state needed. This
+   matches stock, unmodified Firefox's own behavior for content
+   fullscreen: no toolbar, no hover reveal, nothing drawn over the
+   video - whether or not this mod's own fullscreen mode happens to
+   be on or off at the time. */
+:root[inDOMFullscreen="true"] #navigator-toolbox {
+  display: none !important;
 }
 
 
