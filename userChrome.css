@@ -1,5 +1,5 @@
 /* ================================================================
-   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION 24
+   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION 25
    ================================================================
    Tabs, the address/search bar, and the bookmarks bar all hide
    together and reveal on hover near the top of the window, on
@@ -32,6 +32,9 @@
      - fake-fullscreen.uc.js - sets data-uc-fakefullscreen="true" on
        :root when the Full Screen command is used, instead of letting
        Firefox go real-fullscreen (see section 1b).
+     - no-newtab-urlbar-focus.uc.js - stops Firefox from automatically
+       focusing the address bar when a new tab opens. No CSS of its
+       own; listed here only for a complete picture of the mod.
 
    Sections in this file:
      1. Toolbox setup & positioning
