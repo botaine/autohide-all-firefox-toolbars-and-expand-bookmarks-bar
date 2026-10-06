@@ -15,8 +15,43 @@
 // the other .uc.js files in this mod) and each window's own instance
 // hears about every download directly, with no extra cross-window
 // messaging needed.
+//
+// Which window reacts: the window the download was started in (the one
+// containing the page/link that was clicked). Firefox records that page
+// on each download as download.source.browsingContextId, which this
+// script turns back into a window. If that information isn't available
+// for some download, it falls back to whichever window was focused when
+// the download started.
 
 (function () {
+  // Set to false to stop writing "[download-forceopen]" lines to the
+  // Browser Console (Ctrl+Shift+J).
+  const DEBUG = true;
+
+  function log(...args) {
+    if (DEBUG) console.log("[download-forceopen]", ...args);
+  }
+
+  // Works out which window a download started in. Every window's copy of
+  // this script runs this same logic separately, so they all reach the
+  // same answer without needing to talk to each other.
+  function findOriginWindow(download) {
+    try {
+      const id = download.source && download.source.browsingContextId;
+      if (id) {
+        const bc = BrowsingContext.get(id);
+        const browserEl = bc && bc.top && bc.top.embedderElement;
+        const win = browserEl && browserEl.ownerGlobal;
+        if (win && !win.closed) {
+          return { win, how: "browsingContextId" };
+        }
+      }
+    } catch (ex) {
+      console.error("[download-forceopen] Failed to resolve origin window", ex);
+    }
+    return { win: Services.wm.getMostRecentBrowserWindow(), how: "focused-window fallback" };
+  }
+
   function init() {
     const navigatorToolbox = document.getElementById("navigator-toolbox");
     if (!navigatorToolbox) return;
@@ -38,27 +73,40 @@
     // just at completion) don't keep re-triggering the timer.
     const completedAlready = new WeakSet();
 
-    // Firefox's download list is global, not per-window — every open
-    // window's copy of this script hears about every download. To only
-    // reveal the window the download actually happened on, each window
-    // checks whether IT is currently the focused/active browser window
-    // before reacting. (Firefox's public Downloads API doesn't expose
-    // which window originated a given download, so "the window that was
-    // focused at the moment this fired" is used as a close, reliable
-    // stand-in rather than exact origin tracking.)
-    function isThisWindowFocused() {
+    // download -> the window it started in, decided once when the
+    // download is first seen (that's when the originating page is most
+    // reliably still known).
+    const originOf = new WeakMap();
+
+    function decideOrigin(download) {
+      if (!originOf.has(download)) {
+        const result = findOriginWindow(download);
+        originOf.set(download, result.win);
+        log("download started; origin decided by", result.how,
+            "- this window is the origin:", result.win === window);
+      }
+      return originOf.get(download);
+    }
+
+    // True if this window is the one that should react to this download.
+    // If the origin window was closed since the download started, the
+    // currently focused window reacts instead so the user still sees it.
+    function isThisTheTargetWindow(download) {
+      const origin = decideOrigin(download);
+      if (origin && !origin.closed) return origin === window;
       return Services.wm.getMostRecentBrowserWindow() === window;
     }
 
     const view = {
       onDownloadAdded(download) {
-        if (!isThisWindowFocused()) return;
+        if (!isThisTheTargetWindow(download)) return;
         forceStayOpenFor(4000);
       },
       onDownloadChanged(download) {
         if (download.succeeded && !completedAlready.has(download)) {
           completedAlready.add(download);
-          if (!isThisWindowFocused()) return;
+          if (!isThisTheTargetWindow(download)) return;
+          log("download finished; revealing toolbars in the origin window");
           forceStayOpenFor(4000);
           // Firefox's own DownloadsPanel only auto-shows itself the FIRST
           // time in a session (tracked internally via panelHasShownBefore);
