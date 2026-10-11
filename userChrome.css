@@ -1,5 +1,5 @@
 /* ================================================================
-   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION 26
+   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION 28
    ================================================================
    Tabs, the address/search bar, and the bookmarks bar all hide
    together and reveal on hover near the top of the window, on
@@ -149,6 +149,13 @@
 
 #navigator-toolbox > div {
   display: contents;
+}
+
+/* Pressing Alt normally makes Firefox show its classic menu bar (File,
+   Edit, View, History, Bookmarks, Tools, Help). This removes that bar
+   entirely so Alt never shows it, in every mode. */
+#toolbar-menubar {
+  display: none !important;
 }
 
 :where(
