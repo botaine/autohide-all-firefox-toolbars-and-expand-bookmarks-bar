@@ -351,6 +351,17 @@
         if (targetIndex === -1) return;
         if (!before) targetIndex += 1;
 
+        // targetIndex above is a position in the list AS IT IS NOW, with
+        // the dragged item still sitting in it. Firefox's update() instead
+        // wants the position the item should end up at AFTER it has been
+        // lifted out of the list. When the item is moving rightward (it
+        // currently sits before the target spot), lifting it out shifts
+        // everything after it left by one, so the spot must shrink by one
+        // too - otherwise it lands one place too far right. Moving
+        // leftward is unaffected, since nothing before the target shifts.
+        const draggedIndex = children.findIndex((c) => c.guid === draggedGuid);
+        if (draggedIndex !== -1 && draggedIndex < targetIndex) targetIndex -= 1;
+
         // Move the dragged item (bookmark or folder) directly to its new
         // index. Folders are allowed to reorder within their current
         // parent the same way bookmarks do - the caller only ever passes
