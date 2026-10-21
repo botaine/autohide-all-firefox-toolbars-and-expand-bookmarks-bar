@@ -301,11 +301,20 @@
     const dropIndicatorEl = document.getElementById("PlacesToolbarDropIndicator");
     const dropIndicatorHolder = document.getElementById("PlacesToolbarDropIndicatorHolder");
 
+    // Inside an expanded folder, the indicator was drawn a few pixels too
+    // far left compared with where it sits between ordinary bookmarks on
+    // the bar itself. This nudges it right, ONLY for items inside a folder
+    // (the ones this script created, which carry the owner attribute).
+    // Change this number (in pixels) to move it: bigger = further right,
+    // smaller = further left, 0 = no nudge.
+    const FOLDER_DROP_INDICATOR_NUDGE_X = 4;
+
     function showNativeDropIndicatorAt(targetEl, before) {
       if (!dropIndicatorEl || !dropIndicatorHolder) return;
       const holderRect = dropIndicatorHolder.getBoundingClientRect();
       const targetRect = targetEl.getBoundingClientRect();
-      const x = Math.round((before ? targetRect.left : targetRect.right) - holderRect.left);
+      const nudge = targetEl.hasAttribute(OWNER_ATTR) ? FOLDER_DROP_INDICATOR_NUDGE_X : 0;
+      const x = Math.round((before ? targetRect.left : targetRect.right) - holderRect.left + nudge);
       const y = Math.round(targetRect.top - holderRect.top);
       dropIndicatorEl.style.setProperty("visibility", "visible", "important");
       dropIndicatorEl.style.setProperty(
