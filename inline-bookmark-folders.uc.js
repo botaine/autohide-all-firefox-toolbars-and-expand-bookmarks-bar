@@ -309,11 +309,16 @@
     // smaller = further left, 0 = no nudge.
     const FOLDER_DROP_INDICATOR_NUDGE_X = 4;
 
-    function showNativeDropIndicatorAt(targetEl, before) {
+    // alwaysNudge: apply the nudge even for a bookmark on the main bar
+    // (normally it's only for ones inside a folder). Used while the drag
+    // is over a gap between rows, where this script draws the indicator
+    // itself for every kind of bookmark instead of Firefox doing it.
+    function showNativeDropIndicatorAt(targetEl, before, alwaysNudge) {
       if (!dropIndicatorEl || !dropIndicatorHolder) return;
       const holderRect = dropIndicatorHolder.getBoundingClientRect();
       const targetRect = targetEl.getBoundingClientRect();
-      const nudge = targetEl.hasAttribute(OWNER_ATTR) ? FOLDER_DROP_INDICATOR_NUDGE_X : 0;
+      const nudge =
+        alwaysNudge || targetEl.hasAttribute(OWNER_ATTR) ? FOLDER_DROP_INDICATOR_NUDGE_X : 0;
       const x = Math.round((before ? targetRect.left : targetRect.right) - holderRect.left + nudge);
       const y = Math.round(targetRect.top - holderRect.top);
       dropIndicatorEl.style.setProperty("visibility", "visible", "important");
@@ -331,6 +336,160 @@
       dropIndicatorEl.style.removeProperty("transform");
       dropIndicatorEl.style.removeProperty("margin-inline-start");
     }
+
+    // --------------------------------------------------------------
+    // Dropping onto the thin gaps BETWEEN rows of bookmarks
+    //
+    // With several rows of bookmarks, each row has a few pixels of empty
+    // space above and below it. That space isn't part of any bookmark, so
+    // dragging over it used to show the "forbidden" cursor and refuse the
+    // drop. Instead, a drag over one of these gaps now counts as hovering
+    // the nearest bookmark that the dragged one is allowed to move next
+    // to (same folder / same level only), on whichever side of it the
+    // cursor is closer to.
+    //
+    // Blank space at the END of a row (level with the bookmarks, but with
+    // none left to its side) is deliberately not treated this way - it
+    // still refuses a drop, same as before.
+    // --------------------------------------------------------------
+
+    // The plain (non-folder) bookmark currently being dragged by Firefox's
+    // own drag-and-drop on the main bar - folders and bookmarks inside an
+    // expanded folder are tracked separately (manualFolderDrag and
+    // draggedItem). parentGuid is filled in a moment after the drag starts.
+    let nativeDraggedItem = null;
+
+    placesToolbarItems.addEventListener(
+      "dragstart",
+      (event) => {
+        const el = event.target.closest ? event.target.closest(".bookmark-item") : null;
+        if (!el || el.hasAttribute(OWNER_ATTR)) return; // ones inside an expanded folder are tracked by draggedItem
+        const guid = getFolderGuid(el);
+        if (!guid) return;
+        nativeDraggedItem = { guid, parentGuid: null };
+        PlacesUtils.bookmarks
+          .fetch(guid)
+          .then((info) => {
+            if (info && nativeDraggedItem && nativeDraggedItem.guid === guid) {
+              nativeDraggedItem.parentGuid = info.parentGuid;
+            }
+          })
+          .catch((ex) => {
+            console.error("[inline-bookmark-folders] Failed to look up dragged bookmark", ex);
+          });
+      },
+      true
+    );
+    placesToolbarItems.addEventListener(
+      "dragend",
+      () => {
+        nativeDraggedItem = null;
+        hideNativeDropIndicator();
+      },
+      true
+    );
+
+    // If (x, y) is over a gap between rows, returns { el, before } for the
+    // nearest bookmark accept() allows, else null.
+    function findNearestInGap(x, y, accept) {
+      const bar = placesToolbarItems.getBoundingClientRect();
+      if (x < bar.left || x > bar.right || y < bar.top || y > bar.bottom) return null;
+
+      let best = null;
+      let bestDist = Infinity;
+      for (const el of placesToolbarItems.querySelectorAll(".bookmark-item, toolbarseparator")) {
+        const r = el.getBoundingClientRect();
+        if (!r.width || !r.height) continue;
+        // Level with a row (even if blank at that spot) - not a gap. The
+        // outermost pixel on each side of a row is deliberately counted
+        // as gap instead, so there's no thin sliver between a row and the
+        // gap beside it that falls into neither.
+        if (y > r.top + 1 && y < r.bottom - 1) return null;
+        if (!el.classList.contains("bookmark-item") || !accept(el)) continue;
+        const dx = Math.max(r.left - x, 0, x - r.right);
+        const dy = Math.max(r.top - y, 0, y - r.bottom);
+        const dist = dx * dx + dy * dy;
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = { el, before: x < r.left + r.width / 2 };
+        }
+      }
+      return best;
+    }
+
+    // Same, for a drag handled by Firefox's own drag-and-drop (a plain
+    // bookmark on the bar, or one inside an expanded folder). Also returns
+    // what's needed to carry out the move.
+    function findGapDropTarget(event) {
+      let draggedGuid;
+      let parentGuid;
+      let accept;
+      if (draggedItem) {
+        draggedGuid = draggedItem.guid;
+        parentGuid = draggedItem.ownerGuid;
+        accept = (el) => el.getAttribute(OWNER_ATTR) === parentGuid;
+      } else if (nativeDraggedItem && nativeDraggedItem.parentGuid) {
+        draggedGuid = nativeDraggedItem.guid;
+        parentGuid = nativeDraggedItem.parentGuid;
+        accept = (el) => !el.hasAttribute(OWNER_ATTR) && el.id !== "OtherBookmarks";
+      } else {
+        return null;
+      }
+      const found = findNearestInGap(event.clientX, event.clientY, accept);
+      if (!found) return null;
+      const targetGuid = getFolderGuid(found.el);
+      if (!targetGuid) return null;
+      return { el: found.el, before: found.before, targetGuid, draggedGuid, parentGuid };
+    }
+
+    // Handles the drag itself while it is over a gap. Registered on the
+    // window in the capture phase so it runs BEFORE any handler on the
+    // toolbar itself - including Firefox's own, which would otherwise get
+    // to draw its drop indicator on the gap line and show the "forbidden"
+    // cursor for a moment before ours took over.
+    const personalToolbarEl = document.getElementById("PersonalToolbar");
+    function isOverBarButNotABookmark(event) {
+      const t = event.target;
+      return !!(
+        personalToolbarEl &&
+        t &&
+        t.closest &&
+        personalToolbarEl.contains(t) &&
+        !t.closest(".bookmark-item")
+      );
+    }
+
+    window.addEventListener(
+      "dragover",
+      (event) => {
+        if (!isOverBarButNotABookmark(event)) return;
+        const gap = findGapDropTarget(event);
+        if (!gap) return; // not a gap - the existing rules for blank space apply
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        try {
+          event.dataTransfer.dropEffect = "move";
+        } catch (ex) {}
+        showNativeDropIndicatorAt(gap.el, gap.before, true);
+      },
+      true
+    );
+
+    window.addEventListener(
+      "drop",
+      (event) => {
+        if (!isOverBarButNotABookmark(event)) return;
+        const gap = findGapDropTarget(event);
+        if (!gap) return;
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        hideNativeDropIndicator();
+        reorderWithinFolder(gap.draggedGuid, gap.targetGuid, gap.parentGuid, gap.before);
+        draggedItem = null;
+        nativeDraggedItem = null;
+      },
+      true
+    );
 
     // Finds the folder button (native or synthetic) for a given guid,
     // searching every bookmark-item currently in the toolbar/expanded
@@ -865,7 +1024,21 @@
       }
 
       const el = document.elementFromPoint(event.clientX, event.clientY);
-      const hovered = el && el.closest ? el.closest(".bookmark-item") : null;
+      let hovered = el && el.closest ? el.closest(".bookmark-item") : null;
+
+      // Over a gap between rows: count it as hovering the nearest allowed
+      // sibling instead (see findNearestInGap).
+      let viaGap = false;
+      if (!hovered) {
+        const gap = findNearestInGap(event.clientX, event.clientY, (item) => {
+          const g = getFolderGuid(item);
+          return g && manualFolderDrag.siblingGuids.has(g);
+        });
+        if (gap) {
+          hovered = gap.el;
+          viaGap = true;
+        }
+      }
 
       // Hovering the dragged folder itself (no net move yet) is allowed
       // but isn't a reorder target - leave any previous target/indicator
@@ -895,7 +1068,7 @@
       setManualDragCursor("grabbing");
       const rect = hovered.getBoundingClientRect();
       const before = event.clientX < rect.left + rect.width / 2;
-      showNativeDropIndicatorAt(hovered, before);
+      showNativeDropIndicatorAt(hovered, before, viaGap);
       manualFolderDrag.targetGuid = hoveredGuid;
       manualFolderDrag.before = before;
     }
