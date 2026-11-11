@@ -1,5 +1,5 @@
 /* ================================================================
-   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION 29
+   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION 31
    ================================================================
    Tabs, the address/search bar, and the bookmarks bar all hide
    together and reveal on hover near the top of the window, on
@@ -347,9 +347,9 @@
 #navigator-toolbox[forceopen] #TabsToolbar,
 #navigator-toolbox[movingtab] #TabsToolbar,
 #mainPopupSet:has(
-  > [panelopen]:not(#ask-chat-shortcuts, #selection-shortcut-action-panel, #chat-shortcuts-options-panel, #tab-preview-panel, #downloadsPanel)
+  > [panelopen]:not(#ask-chat-shortcuts, #selection-shortcut-action-panel, #chat-shortcuts-options-panel, #tab-preview-panel, #downloadsPanel, #ContentSelectDropdown, #PopupAutoComplete)
 ) ~ #navigator-toolbox #TabsToolbar,
-#mainPopupSet:has(menupopup:hover) ~ #navigator-toolbox #TabsToolbar,
+#mainPopupSet:has(menupopup:hover:not(#ContentSelectDropdown *, #PopupAutoComplete *)) ~ #navigator-toolbox #TabsToolbar,
 #mainPopupSet:has(#downloadsPanel:hover) ~ #navigator-toolbox #TabsToolbar,
 :root[window-modal-open] #TabsToolbar,
 #TabsToolbar[customizing] {
@@ -367,9 +367,9 @@
 #navigator-toolbox[externaldrag] #nav-bar,
 #navigator-toolbox[forceopen] #nav-bar,
 #mainPopupSet:has(
-  > [panelopen]:not(#ask-chat-shortcuts, #selection-shortcut-action-panel, #chat-shortcuts-options-panel, #tab-preview-panel, #downloadsPanel)
+  > [panelopen]:not(#ask-chat-shortcuts, #selection-shortcut-action-panel, #chat-shortcuts-options-panel, #tab-preview-panel, #downloadsPanel, #ContentSelectDropdown, #PopupAutoComplete)
 ) ~ #navigator-toolbox #nav-bar,
-#mainPopupSet:has(menupopup:hover) ~ #navigator-toolbox #nav-bar,
+#mainPopupSet:has(menupopup:hover:not(#ContentSelectDropdown *, #PopupAutoComplete *)) ~ #navigator-toolbox #nav-bar,
 #mainPopupSet:has(#downloadsPanel:hover) ~ #navigator-toolbox #nav-bar,
 :root[window-modal-open] #nav-bar,
 #nav-bar[customizing] {
@@ -396,9 +396,9 @@
 #navigator-toolbox[externaldrag] #PersonalToolbar:not([collapsed]),
 #navigator-toolbox[forceopen] #PersonalToolbar:not([collapsed]),
 #mainPopupSet:has(
-  > [panelopen]:not(#ask-chat-shortcuts, #selection-shortcut-action-panel, #chat-shortcuts-options-panel, #tab-preview-panel, #downloadsPanel)
+  > [panelopen]:not(#ask-chat-shortcuts, #selection-shortcut-action-panel, #chat-shortcuts-options-panel, #tab-preview-panel, #downloadsPanel, #ContentSelectDropdown, #PopupAutoComplete)
 ) ~ #navigator-toolbox #PersonalToolbar:not([collapsed]),
-#mainPopupSet:has(menupopup:hover) ~ #navigator-toolbox #PersonalToolbar:not([collapsed]),
+#mainPopupSet:has(menupopup:hover:not(#ContentSelectDropdown *, #PopupAutoComplete *)) ~ #navigator-toolbox #PersonalToolbar:not([collapsed]),
 #mainPopupSet:has(#downloadsPanel:hover) ~ #navigator-toolbox #PersonalToolbar:not([collapsed]),
 :root[window-modal-open] #navigator-toolbox #PersonalToolbar:not([collapsed]),
 #navigator-toolbox #PersonalToolbar[customizing] {
