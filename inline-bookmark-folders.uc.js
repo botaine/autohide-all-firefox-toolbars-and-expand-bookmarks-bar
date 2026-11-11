@@ -397,15 +397,28 @@
 
       let best = null;
       let bestDist = Infinity;
+      let levelWithRow = false;
+      let crack = null;
       for (const el of placesToolbarItems.querySelectorAll(".bookmark-item, toolbarseparator")) {
         const r = el.getBoundingClientRect();
         if (!r.width || !r.height) continue;
+        const isItem = el.classList.contains("bookmark-item");
         // Level with a row (even if blank at that spot) - not a gap. The
         // outermost pixel on each side of a row is deliberately counted
         // as gap instead, so there's no thin sliver between a row and the
         // gap beside it that falls into neither.
-        if (y > r.top + 1 && y < r.bottom - 1) return null;
-        if (!el.classList.contains("bookmark-item") || !accept(el)) continue;
+        if (y > r.top + 1 && y < r.bottom - 1) {
+          levelWithRow = true;
+          // Within 2px of this bookmark's side = a hairline crack between
+          // two neighbours in the same row, not real blank space: treat
+          // it as belonging to this bookmark instead of rejecting it.
+          const dxEdge = Math.max(r.left - x, 0, x - r.right);
+          if (dxEdge <= 2 && isItem && accept(el)) {
+            crack = { el, before: x < r.left + r.width / 2 };
+          }
+          continue;
+        }
+        if (!isItem || !accept(el)) continue;
         const dx = Math.max(r.left - x, 0, x - r.right);
         const dy = Math.max(r.top - y, 0, y - r.bottom);
         const dist = dx * dx + dy * dy;
@@ -414,7 +427,26 @@
           best = { el, before: x < r.left + r.width / 2 };
         }
       }
-      return best;
+      return levelWithRow ? crack : best;
+    }
+
+    // Troubleshooting aid: writes a line to the Browser Console (Ctrl+Shift+J)
+    // whenever a drag over the bookmarks bar is rejected (forbidden cursor),
+    // saying what was under the mouse. Set to false to silence it.
+    const DEBUG_DRAG = true;
+    let lastDragLog = 0;
+    function dragLog(label, event) {
+      if (!DEBUG_DRAG) return;
+      const now = Date.now();
+      if (now - lastDragLog < 300) return;
+      lastDragLog = now;
+      const t = event.target;
+      console.log(
+        "[inline-bookmark-folders] drag rejected:", label,
+        "| target:", t && t.localName, t && t.id, t && String(t.className),
+        "| x,y:", event.clientX, event.clientY,
+        "| dragged known:", !!(draggedItem || (nativeDraggedItem && nativeDraggedItem.parentGuid))
+      );
     }
 
     // Same, for a drag handled by Firefox's own drag-and-drop (a plain
@@ -1236,6 +1268,7 @@
         }
 
         event.preventDefault();
+        dragLog("over a folder's icon", event);
         try {
           event.dataTransfer.dropEffect = "none";
         } catch (ex) {}
@@ -1419,6 +1452,7 @@
             return;
           }
           event.preventDefault();
+          dragLog("blank space on the bar", event);
           try {
             event.dataTransfer.dropEffect = "none";
           } catch (ex) {}
