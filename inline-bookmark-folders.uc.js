@@ -433,7 +433,7 @@
     // Troubleshooting aid: writes a line to the Browser Console (Ctrl+Shift+J)
     // whenever a drag over the bookmarks bar is rejected (forbidden cursor),
     // saying what was under the mouse. Set to false to silence it.
-    const DEBUG_DRAG = true;
+    const DEBUG_DRAG = false;
     let lastDragLog = 0;
     function dragLog(label, event) {
       if (!DEBUG_DRAG) return;
