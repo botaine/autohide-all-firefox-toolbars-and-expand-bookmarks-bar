@@ -1,5 +1,5 @@
 /* ================================================================
-   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION 33
+   FIREFOX AUTO-HIDE TOOLBAR — OVERLAY VERSION 34
    ================================================================
    Tabs, the address/search bar, and the bookmarks bar all hide
    together and reveal on hover near the top of the window, on
@@ -41,6 +41,7 @@
      1b. Fullscreen push-down override
      1c. Native content/video fullscreen override (fully hides the
          toolbar over a fullscreened video, e.g. on YouTube)
+     1d. Mini window: stops the page being pushed down (gray gap)
      2. Hover trigger strip
      3. Toolbar show/hide states (tabs, nav-bar, bookmarks)
      4. Bookmarks toolbar specifics (folder expansion/drag styling,
@@ -253,6 +254,30 @@
    be on or off at the time. */
 :root[inDOMFullscreen="true"] #navigator-toolbox {
   display: none !important;
+}
+
+
+/* ----------------------------------------------------------------
+   1d. MINI WINDOW (Firefox 160+) - NO GRAY GAP WHERE THE TOOLBARS WERE
+   A mini window has :root[mini-window]. Firefox makes room for its own
+   top bar there by pushing the whole page down by
+   --mini-window-toolbar-height (84px), and takes that room back about a
+   second after the bar goes away. This mod hides the toolbars right
+   away instead, so for that second an empty gray strip showed where
+   they had been. Zeroing the variable (and the few ways the push could
+   be applied) keeps the page where it is, so the toolbars just overlay
+   it like they do in a normal window. Only matches mini windows.
+   ---------------------------------------------------------------- */
+:root[mini-window] {
+  --mini-window-toolbar-height: 0px !important;
+}
+
+:root[mini-window] #browser {
+  top: 0 !important;
+  inset-block-start: 0 !important;
+  margin-block-start: 0 !important;
+  transform: none !important;
+  translate: none !important;
 }
 
 
